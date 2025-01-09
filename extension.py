@@ -15,13 +15,16 @@ t = t - np.repeat(t0, len(t))
 y = data[:,1]
 y = y/198
 
-#initial value 0
-def f(y,t,p,q):
-    # return (p*(np.exp(math.e*(t*(p+q)))-1))/(p*np.exp(math.e*(t*(p+q)))+q)
-    return p+(q-p)*y-q*y**2
+def g(t, t0, A, k):
+    return 1 + (A)/(1 + math.e**(-k*(t-t0)))
 
-def ode(t, p, q):
-    return odeint(f, 0, t, (p, q)).flatten()
+#initial value 0
+def f(y, t, p, q, t0, A, k):
+    # return (p*(np.exp(math.e*(t*(p+q)))-1))/(p*np.exp(math.e*(t*(p+q)))+q)
+    return (p+(q-p)*y-q*y**2)*g(t,t0,A,k)
+
+def ode(t, p, q, t0, A, k):
+    return odeint(f, 0, t, (p, q, t0, A, k)).flatten()
 
 def calc_error(t1, y1, t2, y2):
     square_sum = 0
@@ -34,14 +37,12 @@ def calc_error(t1, y1, t2, y2):
     return mse
 
 
-
-params, covar = curve_fit(ode,t,y, p0=[0.0001, 0.001])
-p_opt, q_opt = params
-print("p, q: ", params)
+params, covar = curve_fit(ode,t,y, p0=[0.0001, 0.001, 500, 500, 1])
+p_opt, q_opt, t0_opt, A_opt, k_opt = params
+print("p, q, t0, A, k: ", params)
 print("covariance: ", covar)
-# t_bass = np.linspace(0, np.max(t), int(np.max(t))-1)
 t_bass = np.arange(np.max(t)+1)
-y_bass = ode(t_bass, p_opt, q_opt)
+y_bass = ode(t_bass, p_opt, q_opt, t0_opt, A_opt, k_opt)
 print("error: ", calc_error(t, y, t_bass, y_bass))
 
 plt.plot(t, y, 'ro')
